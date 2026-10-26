@@ -37,6 +37,14 @@ export function AppNav() {
       >
         Scouting
       </Link>
+      <Link
+        to="/login"
+        search={{ redirect: '/scouting/players' }}
+        className="ml-auto text-slate-700 hover:text-slate-900"
+        activeProps={{ className: 'text-sky-700 underline' }}
+      >
+        Staff sign-in
+      </Link>
     </nav>
   )
 }

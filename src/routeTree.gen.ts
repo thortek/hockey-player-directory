@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GamesIndexRouteImport } from './routes/games/index'
 import { Route as PlayersIndexRouteImport } from './routes/players/index'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players/$playerId'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
@@ -62,6 +68,7 @@ const ScoutingPlayersRoute = ScoutingPlayersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/scouting/aggregates': typeof ScoutingAggregatesRoute
   '/scouting/events': typeof ScoutingEventsRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/scouting/aggregates': typeof ScoutingAggregatesRoute
   '/scouting/events': typeof ScoutingEventsRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/scouting/aggregates': typeof ScoutingAggregatesRoute
   '/scouting/events': typeof ScoutingEventsRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/login'
     | '/players/$playerId'
     | '/scouting/aggregates'
     | '/scouting/events'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/login'
     | '/players/$playerId'
     | '/scouting/aggregates'
     | '/scouting/events'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/login'
     | '/players/$playerId'
     | '/scouting/aggregates'
     | '/scouting/events'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  LoginRoute: typeof LoginRoute
   PlayersPlayerIdRoute: typeof PlayersPlayerIdRoute
   ScoutingAggregatesRoute: typeof ScoutingAggregatesRoute
   ScoutingEventsRoute: typeof ScoutingEventsRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  LoginRoute: LoginRoute,
   PlayersPlayerIdRoute: PlayersPlayerIdRoute,
   ScoutingAggregatesRoute: ScoutingAggregatesRoute,
   ScoutingEventsRoute: ScoutingEventsRoute,
