@@ -6,6 +6,8 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
 import { AppNav } from '../components/AppNav'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
@@ -40,11 +42,13 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  // One cache per browser session (and per server request), never shared across users.
+  const [queryClient] = useState(() => new QueryClient())
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <AppNav />
       <Outlet />
-    </>
+    </QueryClientProvider>
   )
 }
 

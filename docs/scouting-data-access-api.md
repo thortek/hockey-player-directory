@@ -22,6 +22,20 @@ Each helper takes the client as its first argument (`DbClient` from `src/lib/sup
 
 Reads throw on a database error; server functions turn that into the safe message from `docs/server-function-contract.md`. Writes return `{ data, error }` with a message a scout can act on.
 
+## Browser access: TanStack Query hooks
+
+The browser cannot read the scouting tables (RLS denies the publishable key until Sprint 4). Components use these hooks; each `queryFn` calls a server function in `src/server/scouting.ts`, which validates input and runs the matching helper above with the server client.
+
+| Hook (`src/lib/scouting/hooks.ts`) | Server function | Helper | Cache key (`query-keys.ts`) |
+|------------------------------------|-----------------|--------|-----------------------------|
+| `usePlayers({ position? })` | `fetchPlayers` | `listPlayers` | `scoutingKeys.playerList(filters)` |
+| `usePlayer(playerId)` (disabled without an id) | `fetchPlayer` | `getPlayerById` | `scoutingKeys.playerDetail(id)` |
+| `useGames({ status?, playerId? })` | `fetchGames` | `listGames` | `scoutingKeys.gameList(filters)` |
+| `useScoutingEvents({ playerId?, gameId?, eventType? })` | `fetchScoutingEvents` | `listScoutingEvents` | `scoutingKeys.eventList(filters)` |
+| `usePlayerEventTotals({ gameId?, from?, to? })` | `fetchPlayerEventTotals` | `getPlayerEventTotals` | `scoutingKeys.playerEventTotals(filters)` |
+
+Write hooks and what each invalidates are in `docs/scouting-cache-invalidation-map.md`.
+
 ## Private: never import or call these from routes, components, or hooks
 
 - `src/lib/supabase.server.ts` (the secret key). Only `src/server/*` may import it.
