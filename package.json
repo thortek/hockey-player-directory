@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:access": "vitest run tests/access"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
