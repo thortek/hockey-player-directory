@@ -39,7 +39,7 @@ The secret-key client (`src/lib/supabase.server.ts`) is not used on any staff re
 
 | Server entry (planned name) | Why |
 |-----------------------------|-----|
-| `getCurrentStaff` | Tells the UI who is signed in and their role; returns null rather than throwing for signed-out visitors |
+| `getCurrentStaff` | Tells the UI who is signed in and their role. Calls `requireSession()` first, so a signed-out visitor gets unauthorized (pages catch it and send them to `/login`) |
 | Scouting reads (`fetchScoutingEvents`, `fetchPlayerEventTotals`, scouting notes loader) | Scouting rows only for a verified coaching or scouting user |
 | Scouting writes (`runScoutingMutation`) | Writes only for a verified scouting user |
 | Medical records loader | Health rows only for a verified medical user |
