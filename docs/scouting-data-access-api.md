@@ -16,8 +16,12 @@ Each helper takes the client as its first argument (`DbClient` from `src/lib/sup
 | | `getGameById(db, id)` | `GameRow \| null` | Single game view |
 | | `listScoutingEvents(db, { playerId?, gameId?, eventType? })` | `ScoutingEventWithRefs[]` | Event lists with player and game joined |
 | `src/lib/scouting/mutations.ts` | `createScoutingEvent(db, input)` | `MutationResult<scouting_events row>` | Log an observation |
-| | `updateScoutingEventNotes(db, eventId, notes)` | `MutationResult<scouting_events row>` | Edit an event's note |
+| | `updateScoutingEvent(db, eventId, patch)` | `MutationResult<scouting_events row>` | Fix an event's type, period, clock, or note |
+| | `updateScoutingEventNotes(db, eventId, notes)` | `MutationResult<scouting_events row>` | Edit only an event's note |
+| | `createPlayer(db, input)` | `MutationResult<players row>` | Add a player to the roster |
 | | `updatePlayerRoster(db, playerId, patch)` | `MutationResult<players row>` | Change number, position, team, or active flag |
+| | `createGame(db, input)` | `MutationResult<games row>` | Add a game to the schedule |
+| | `updateGame(db, gameId, patch)` | `MutationResult<games row>` | Change a game's date, opponent, venue, or status |
 | `src/lib/scouting/rpc.ts` | `getPlayerEventTotals(db, { p_game_id?, p_from?, p_to? })` | `PlayerEventTotalsRow[]` | Per-player totals from `public.player_event_totals` |
 
 Reads throw on a database error; server functions turn that into the safe message from `docs/server-function-contract.md`. Writes return `{ data, error }` with a message a scout can act on.
@@ -34,7 +38,9 @@ The browser cannot read the scouting tables (RLS denies the publishable key unti
 | `useScoutingEvents({ playerId?, gameId?, eventType? })` | `fetchScoutingEvents` | `listScoutingEvents` | `scoutingKeys.eventList(filters)` |
 | `usePlayerEventTotals({ gameId?, from?, to? })` | `fetchPlayerEventTotals` | `getPlayerEventTotals` | `scoutingKeys.playerEventTotals(filters)` |
 
-Write hooks and what each invalidates are in `docs/scouting-cache-invalidation-map.md`.
+| `useGame(gameId)` (disabled without an id) | `fetchGame` | `getGameById` | `scoutingKeys.gameDetail(id)` |
+
+Write hooks (`src/lib/scouting/mutation-hooks.ts`) are one per helper in `mutations.ts`: `useCreatePlayer`, `useUpdatePlayerRoster`, `useCreateGame`, `useUpdateGame`, `useCreateScoutingEvent`, `useUpdateScoutingEvent`, `useUpdateScoutingEventNotes`. Each runs its helper by name through the `runScoutingMutation` server function (`src/server/scouting-mutations.ts`), which validates that helper's arguments and calls it with the server client. What each one invalidates is in `docs/scouting-cache-invalidation-map.md`.
 
 ## Private: never import or call these from routes, components, or hooks
 

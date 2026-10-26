@@ -21,6 +21,7 @@ export const scoutingKeys = {
   games: () => [...scoutingKeys.all, 'games'] as const,
   gameLists: () => [...scoutingKeys.games(), 'list'] as const,
   gameList: (filters: GameListFilters = {}) => [...scoutingKeys.gameLists(), filters] as const,
+  gameDetail: (gameId: string) => [...scoutingKeys.games(), 'detail', gameId] as const,
 
   events: () => [...scoutingKeys.all, 'events'] as const,
   eventLists: () => [...scoutingKeys.events(), 'list'] as const,

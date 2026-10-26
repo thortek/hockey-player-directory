@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import {
+  fetchGame,
   fetchGames,
   fetchPlayer,
   fetchPlayerEventTotals,
@@ -43,6 +44,15 @@ export function useGames(filters: GameListFilters = {}) {
   return useQuery({
     queryKey: scoutingKeys.gameList(filters),
     queryFn: () => fetchGames({ data: filters }),
+    staleTime: STALE_MS,
+  })
+}
+
+export function useGame(gameId: string | undefined) {
+  return useQuery({
+    queryKey: scoutingKeys.gameDetail(gameId ?? ''),
+    queryFn: () => fetchGame({ data: { gameId } }),
+    enabled: Boolean(gameId),
     staleTime: STALE_MS,
   })
 }

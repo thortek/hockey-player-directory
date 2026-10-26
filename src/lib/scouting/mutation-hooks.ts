@@ -1,52 +1,65 @@
-// TanStack Query write hooks for scouting data.
-// Each mutationFn calls a server function that runs the matching helper in
-// mutations.ts; a { data, error } result with an error becomes a thrown Error
-// so the component's isError / error.message shows the readable message.
+// TanStack Query write hooks for scouting data: one per helper in mutations.ts.
+// Each mutationFn runs its named helper (createScoutingEvent, updateGame, ...)
+// through runScoutingMutation, which executes it on the server with the server
+// client. A { data, error } result with an error becomes a thrown Error, so the
+// component's isError / error.message shows the readable message.
 // onSuccess invalidates only the key prefixes the write can change
 // (docs/scouting-cache-invalidation-map.md), never the whole cache.
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { savePlayerRoster, saveScoutingEvent, saveScoutingEventNotes } from '#/server/scouting'
-import type { MutationResult, NewScoutingEvent, PlayerRosterPatch } from './mutations'
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { runScoutingMutation } from '#/server/scouting-mutations'
+import type {
+  GamePatch,
+  MutationResult,
+  NewGame,
+  NewPlayer,
+  NewScoutingEvent,
+  PlayerRosterPatch,
+  ScoutingEventPatch,
+  ScoutingMutationArgs,
+  ScoutingMutationData,
+  ScoutingMutationName,
+} from './mutations'
 import { scoutingKeys } from './query-keys'
+import type { Tables } from '#/types/database'
 
-function unwrap<T>(result: MutationResult<T>): T {
+/** Runs the named mutations.ts helper on the server and unwraps its result. */
+async function runHelper<K extends ScoutingMutationName>(
+  name: K,
+  ...args: ScoutingMutationArgs<K>
+): Promise<ScoutingMutationData<K>> {
+  const result = (await runScoutingMutation({ data: { name, args } })) as MutationResult<ScoutingMutationData<K>>
   if (result.error) throw new Error(result.error.message)
   return result.data
 }
 
-export function useCreateScoutingEvent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (input: NewScoutingEvent) => unwrap(await saveScoutingEvent({ data: input })),
-    onSuccess: (event) =>
-      Promise.all([
-        // Every event list (filtered by this player, this game, or none) may include it.
-        queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
-        // Totals per player change for every range that covers this game.
-        queryClient.invalidateQueries({ queryKey: scoutingKeys.aggregates() }),
-        // "Games this player has events in" can gain a game.
-        queryClient.invalidateQueries({ queryKey: scoutingKeys.gameLists() }),
-        queryClient.invalidateQueries({ queryKey: scoutingKeys.playerDetail(event.player_id) }),
-      ]),
-  })
+/** Everything an event appears in: lists, totals, its player's and game's views. */
+function invalidateEventViews(queryClient: QueryClient, event: Tables<'scouting_events'>) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
+    queryClient.invalidateQueries({ queryKey: scoutingKeys.aggregates() }),
+    queryClient.invalidateQueries({ queryKey: scoutingKeys.gameLists() }),
+    queryClient.invalidateQueries({ queryKey: scoutingKeys.playerDetail(event.player_id) }),
+    queryClient.invalidateQueries({ queryKey: scoutingKeys.gameDetail(event.game_id) }),
+  ])
 }
 
-export function useUpdateScoutingEventNotes() {
+// ---- Players ---------------------------------------------------------------
+
+export function useCreatePlayer() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { eventId: string; notes: string | null }) =>
-      unwrap(await saveScoutingEventNotes({ data: input })),
-    // Notes appear only in event lists; counts and rosters are unchanged.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
+    mutationFn: (input: NewPlayer) => runHelper('createPlayer', input),
+    // A new player has no events yet, so only roster lists change.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: scoutingKeys.playerLists() }),
   })
 }
 
 export function useUpdatePlayerRoster() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { playerId: string; patch: PlayerRosterPatch }) =>
-      unwrap(await savePlayerRoster({ data: input })),
+    mutationFn: (input: { playerId: string; patch: PlayerRosterPatch }) =>
+      runHelper('updatePlayerRoster', input.playerId, input.patch),
     onSuccess: (player) =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: scoutingKeys.playerLists() }),
@@ -54,6 +67,68 @@ export function useUpdatePlayerRoster() {
         // Event rows and totals show the player's number and position.
         queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
         queryClient.invalidateQueries({ queryKey: scoutingKeys.aggregates() }),
+      ]),
+  })
+}
+
+// ---- Games -----------------------------------------------------------------
+
+export function useCreateGame() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: NewGame) => runHelper('createGame', input),
+    // No events reference a new game yet.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: scoutingKeys.gameLists() }),
+  })
+}
+
+export function useUpdateGame() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { gameId: string; patch: GamePatch }) => runHelper('updateGame', input.gameId, input.patch),
+    onSuccess: (game) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.gameLists() }),
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.gameDetail(game.id) }),
+        // Event rows show the game's opponent and date.
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
+        // A changed played_at can move the game in or out of a date-range total.
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.aggregates() }),
+      ]),
+  })
+}
+
+// ---- Scouting events ---------------------------------------------------------
+
+export function useCreateScoutingEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: NewScoutingEvent) => runHelper('createScoutingEvent', input),
+    onSuccess: (event) => invalidateEventViews(queryClient, event),
+  })
+}
+
+export function useUpdateScoutingEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { eventId: string; patch: ScoutingEventPatch }) =>
+      runHelper('updateScoutingEvent', input.eventId, input.patch),
+    // A changed event_type moves counts between totals columns.
+    onSuccess: (event) => invalidateEventViews(queryClient, event),
+  })
+}
+
+export function useUpdateScoutingEventNotes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { eventId: string; notes: string | null }) =>
+      runHelper('updateScoutingEventNotes', input.eventId, input.notes),
+    // Notes show in event lists and the player's and game's views; counts don't change.
+    onSuccess: (event) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.eventLists() }),
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.playerDetail(event.player_id) }),
+        queryClient.invalidateQueries({ queryKey: scoutingKeys.gameDetail(event.game_id) }),
       ]),
   })
 }

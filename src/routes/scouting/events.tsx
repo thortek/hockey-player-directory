@@ -4,7 +4,7 @@ import { useGames, usePlayers, useScoutingEvents } from '#/lib/scouting/hooks'
 import { useCreateScoutingEvent } from '#/lib/scouting/mutation-hooks'
 import type { EventType } from '#/lib/scouting/queries'
 import { formatClock, isValidPlayerId } from '#/lib/directory/mappers'
-import { EVENT_TYPES } from '#/server/scouting'
+import { EVENT_TYPES } from '#/server/scouting-mutations'
 import { ScoutingNav, StatusMessage } from '#/components/ScoutingNav'
 
 const GAME_ID = /^game-\d{3}$/
