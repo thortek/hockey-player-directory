@@ -1,9 +1,11 @@
 // One server function for every scouting write. The browser sends the name of
-// a helper in src/lib/scouting/mutations.ts plus its arguments; this validates
-// the arguments for that helper and runs it with the server client.
+// a helper in src/lib/scouting/mutations.ts plus its arguments; this verifies
+// the caller with requireSession(), validates the arguments for that helper,
+// and runs it with the caller's own client, so RLS decides whether the write
+// is allowed (only scouting may write scouting events).
 
 import { createServerFn } from '@tanstack/react-start'
-import { getSupabaseServerClient } from '#/lib/supabase.server'
+import { requireSession } from '#/lib/auth/require-session'
 import { isValidPlayerId } from '#/lib/directory/mappers'
 import type { EventType } from '#/lib/scouting/queries'
 import type { Tables } from '#/types/database'
@@ -76,7 +78,8 @@ export const runScoutingMutation = createServerFn({ method: 'POST' })
     if (!(input?.name in validators)) throw new Error('Unknown scouting mutation.')
     return { name: input.name, args: validators[input.name](Array.isArray(input.args) ? input.args : []) }
   })
-  .handler(({ data }): Promise<MutationResult<ScoutingRow>> => {
+  .handler(async ({ data }): Promise<MutationResult<ScoutingRow>> => {
+    const { db } = await requireSession()
     const helper = scoutingMutations[data.name] as (...args: unknown[]) => Promise<MutationResult<ScoutingRow>>
-    return helper(getSupabaseServerClient(), ...data.args)
+    return helper(db, ...data.args)
   })

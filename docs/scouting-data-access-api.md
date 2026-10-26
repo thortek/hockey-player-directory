@@ -6,7 +6,7 @@ Every read, write, and aggregate the hockey app makes goes through three typed m
 
 ## Allowed functions
 
-Each helper takes the client as its first argument (`DbClient` from `src/lib/supabase/client.ts`). Server functions in `src/server/*` pass the secret-key client today; Sprint 4 passes a signed-in staff client.
+Each helper takes the client as its first argument (`DbClient` from `src/lib/supabase/client.ts`). Scouting server functions in `src/server/*` call `requireSession()` and pass that staff member's own client (`src/lib/supabase/server.ts`), so Postgres RLS filters every row. Only the public directory (`src/server/directory.ts`) uses the secret key, and only for `players` and `games`.
 
 | Module | Function | Returns | Scout use |
 |--------|----------|---------|-----------|
@@ -28,7 +28,7 @@ Reads throw on a database error; server functions turn that into the safe messag
 
 ## Browser access: TanStack Query hooks
 
-The browser cannot read the scouting tables (RLS denies the publishable key until Sprint 4). Components use these hooks; each `queryFn` calls a server function in `src/server/scouting.ts`, which validates input and runs the matching helper above with the server client.
+Components use these hooks; each `queryFn` calls a server function in `src/server/scouting.ts`, which validates input, verifies the session with `requireSession()`, and runs the matching helper above as the signed-in staff member. A signed-out call fails with 401 before any query runs.
 
 | Hook (`src/lib/scouting/hooks.ts`) | Server function | Helper | Cache key (`query-keys.ts`) |
 |------------------------------------|-----------------|--------|-----------------------------|

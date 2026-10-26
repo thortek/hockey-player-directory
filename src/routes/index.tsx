@@ -32,11 +32,11 @@ function HomePage() {
           <dt className="text-sm text-slate-600">Active players</dt>
           <dd className="text-2xl font-bold text-slate-900">{summary.playerCount}</dd>
         </Link>
-        <Link to="/games" search={{ status: 'upcoming', playerId: 'all' }} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+        <Link to="/games" search={{ status: 'upcoming' }} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <dt className="text-sm text-slate-600">Upcoming games</dt>
           <dd className="text-2xl font-bold text-slate-900">{summary.upcomingCount}</dd>
         </Link>
-        <Link to="/games" search={{ status: 'final', playerId: 'all' }} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+        <Link to="/games" search={{ status: 'final' }} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <dt className="text-sm text-slate-600">Final games</dt>
           <dd className="text-2xl font-bold text-slate-900">{summary.finalCount}</dd>
         </Link>

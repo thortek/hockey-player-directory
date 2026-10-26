@@ -8,6 +8,9 @@ const activeClass = 'bg-sky-50 text-sky-800'
 export function ScoutingNav() {
   return (
     <nav aria-label="Scouting" className="mb-4 flex gap-1 border-b border-slate-200 pb-2">
+      <Link to="/scouting" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeClass }}>
+        Overview
+      </Link>
       <Link to="/scouting/players" search={{ position: 'all' }} className={linkClass} activeProps={{ className: activeClass }}>
         Roster
       </Link>

@@ -1,15 +1,14 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { getGames } from '#/server/directory'
-import { parsePlayerFilter, parseStatusFilter, type StatusFilter } from '#/lib/directory/mappers'
+import { parseStatusFilter, type StatusFilter } from '#/lib/directory/mappers'
 
 const STATUSES: StatusFilter[] = ['all', 'upcoming', 'final']
 
 export const Route = createFileRoute('/games/')({
   validateSearch: (search: Record<string, unknown>) => ({
     status: parseStatusFilter(search.status),
-    playerId: parsePlayerFilter(search.playerId),
   }),
-  loaderDeps: ({ search }) => ({ status: search.status, playerId: search.playerId }),
+  loaderDeps: ({ search }) => ({ status: search.status }),
   loader: ({ deps }) => getGames({ data: deps }),
   head: () => ({
     meta: [
@@ -23,15 +22,13 @@ export const Route = createFileRoute('/games/')({
 const dateFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'America/Denver' })
 
 function GamesIndexPage() {
-  const { games, players } = Route.useLoaderData()
-  const search = Route.useSearch()
-  const navigate = useNavigate({ from: '/games/' })
+  const { games } = Route.useLoaderData()
 
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-bold text-slate-900">Games board</h1>
       <p className="mt-2 text-slate-600">
-        {games.length} games match these filters.{search.playerId !== 'all' && ' Showing games where this player has scouting events.'}
+        {games.length} games match this filter. Staff can see who was scouted in each game under Scouting.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -39,7 +36,7 @@ function GamesIndexPage() {
           <Link
             key={status}
             to="/games"
-            search={{ ...search, status }}
+            search={{ status }}
             className="rounded-full border border-slate-300 px-3 py-1 text-sm capitalize text-slate-700 hover:bg-slate-100"
             activeOptions={{ includeSearch: true }}
             activeProps={{ className: 'border-sky-600 bg-sky-50 text-sky-800' }}
@@ -47,21 +44,6 @@ function GamesIndexPage() {
             {status}
           </Link>
         ))}
-        <label className="ml-auto text-sm text-slate-600">
-          Player{' '}
-          <select
-            value={search.playerId}
-            onChange={(e) => navigate({ search: { ...search, playerId: parsePlayerFilter(e.target.value) } })}
-            className="rounded-md border border-slate-300 px-2 py-1"
-          >
-            <option value="all">All players</option>
-            {players.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.displayName}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <ul className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200">

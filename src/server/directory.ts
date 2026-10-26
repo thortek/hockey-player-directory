@@ -1,17 +1,17 @@
-// Directory server functions (contract: docs/server-function-contract.md).
-// Handlers run only on the server, so the secret key never reaches the
-// browser. They return UI-ready DTOs, never raw rows, clients, or env.
+// Public directory server functions (contract: docs/server-function-contract.md).
+// These serve the signed-out pages (/, /players, /games), so they read ONLY the
+// roster and schedule (players, games) with the server's secret key, never
+// scouting_events or player_health_notes (docs/security/rls-policy-spec.md,
+// cross-cutting rule 2). Staff data lives behind /scouting and requireSession().
 
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseServerClient } from '#/lib/supabase.server'
-import { getPlayerById, listGames, listPlayers, listScoutingEvents } from '#/lib/scouting/queries'
+import { getPlayerById, listGames, listPlayers } from '#/lib/scouting/queries'
 import {
   isValidPlayerId,
   mapPlayerRow,
-  parsePlayerFilter,
   parsePositionFilter,
   parseStatusFilter,
-  toEventCards,
   toGameCards,
   toPlayerCards,
 } from '#/lib/directory/mappers'
@@ -42,34 +42,20 @@ export const getPlayer = createServerFn({ method: 'GET' })
   }))
   .handler(({ data }) =>
     safely(async () => {
-      if (!data.playerId) return { player: null, games: [], events: [] }
-      const db = getSupabaseServerClient()
-      const row = await getPlayerById(db, data.playerId)
-      if (!row?.is_active) return { player: null, games: [], events: [] }
-      const [games, events] = await Promise.all([
-        listGames(db, { playerId: row.id }),
-        listScoutingEvents(db, { playerId: row.id }),
-      ])
-      return { player: mapPlayerRow(row), games: toGameCards(games), events: toEventCards(events) }
+      if (!data.playerId) return { player: null }
+      const row = await getPlayerById(getSupabaseServerClient(), data.playerId)
+      return { player: row?.is_active ? mapPlayerRow(row) : null }
     }),
   )
 
 export const getGames = createServerFn({ method: 'GET' })
-  .validator((input: { status?: unknown; playerId?: unknown }) => ({
-    status: parseStatusFilter(input?.status),
-    playerId: parsePlayerFilter(input?.playerId),
-  }))
+  .validator((input: { status?: unknown }) => ({ status: parseStatusFilter(input?.status) }))
   .handler(({ data }) =>
     safely(async () => {
-      const db = getSupabaseServerClient()
-      const [games, players] = await Promise.all([
-        listGames(db, {
-          status: data.status === 'all' ? undefined : data.status,
-          playerId: data.playerId === 'all' ? undefined : data.playerId,
-        }),
-        listPlayers(db),
-      ])
-      return { games: toGameCards(games), players: toPlayerCards(players, 'all') }
+      const games = await listGames(getSupabaseServerClient(), {
+        status: data.status === 'all' ? undefined : data.status,
+      })
+      return { games: toGameCards(games) }
     }),
   )
 

@@ -88,3 +88,18 @@ export async function listScoutingEvents(
       (a.clock_seconds ?? 0) - (b.clock_seconds ?? 0),
   )
 }
+
+export type PlayerHealthNoteRow = Tables<'player_health_notes'>
+export type PlayerHealthNoteWithPlayer = PlayerHealthNoteRow & {
+  player: Pick<PlayerRow, 'id' | 'full_name' | 'jersey_number'>
+}
+
+/** Medical / sports-science notes, newest first. RLS returns rows only to medical staff. */
+export async function listPlayerHealthNotes(db: DbClient): Promise<PlayerHealthNoteWithPlayer[]> {
+  const { data, error } = await db
+    .from('player_health_notes')
+    .select('*, player:players!inner(id, full_name, jersey_number)')
+    .order('recorded_on', { ascending: false })
+  if (error) throw error
+  return data
+}

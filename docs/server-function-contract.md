@@ -29,8 +29,8 @@ Inputs are re-validated on the server even though routes already validate search
 ## Success output
 
 - `getPlayers` → `PlayerCard[]` (`id`, `displayName`, `number`, `position`), active only, sorted by number.
-- `getPlayer` → `{ player: PlayerCard | null, games: GameCard[] }`. Unknown ids return `player: null` and the page still renders with HTTP 200.
-- `getGames` → `{ games: GameCard[], players: PlayerCard[] }` (players feed the filter dropdown).
+- `getPlayer` → `{ player: PlayerCard | null }`. Unknown ids return `player: null` and the page still renders with HTTP 200. (Sprint 4: scouting events moved behind staff sign-in.)
+- `getGames` → `{ games: GameCard[] }`, filtered by status. (Sprint 4: the player filter came from scouting events and moved behind staff sign-in.)
 - `getDirectorySummary` → `{ playerCount, upcomingCount, finalCount }`.
 
 ### Mapping notes (UI-facing, not raw DB dump)
