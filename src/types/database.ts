@@ -44,6 +44,50 @@ export type Database = {
         }
         Relationships: []
       }
+      player_health_notes: {
+        Row: {
+          availability: string
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          recorded_by: string
+          recorded_on: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: string
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          recorded_by?: string
+          recorded_on?: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: string
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          recorded_by?: string
+          recorded_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_health_notes_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           created_at: string
@@ -154,6 +198,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_staff_role: { Args: never; Returns: string }
       player_event_totals: {
         Args: { p_from?: string; p_game_id?: string; p_to?: string }
         Returns: {
