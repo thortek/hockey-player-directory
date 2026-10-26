@@ -9,7 +9,7 @@
 
 import type { DbClient } from '#/lib/supabase/client'
 
-export type StaffRole = 'coaching' | 'scouting' | 'medical'
+export type StaffRole = 'coaching' | 'scouting' | 'medical' | 'assistant_scout' | 'video_analyst'
 
 export type StaffSession = {
   db: DbClient
@@ -34,7 +34,7 @@ export class ForbiddenError extends Error {
   }
 }
 
-const ROLES: readonly StaffRole[] = ['coaching', 'scouting', 'medical']
+const ROLES: readonly StaffRole[] = ['coaching', 'scouting', 'medical', 'assistant_scout', 'video_analyst']
 
 /**
  * Verifies the caller and returns their user-scoped client and role.

@@ -86,6 +86,13 @@ export type Database = {
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "player_health_notes_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "scouting_player_board"
+            referencedColumns: ["id"]
+          },
         ]
       }
       players: {
@@ -170,6 +177,13 @@ export type Database = {
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "scouting_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "scouting_player_board"
+            referencedColumns: ["id"]
+          },
         ]
       }
       staff_members: {
@@ -195,7 +209,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      scouting_player_board: {
+        Row: {
+          event_count: number | null
+          full_name: string | null
+          games_scouted: number | null
+          id: string | null
+          jersey_number: number | null
+          last_scouted_at: string | null
+          position: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_staff_role: { Args: never; Returns: string }
