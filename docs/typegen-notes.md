@@ -6,6 +6,7 @@
 |------|---------|
 | `supabase/migrations/001_scouting_schema.sql` | `players`, `games`, `scouting_events`, indexes, RLS on |
 | `supabase/migrations/0015_service_role_grants.sql` | Table privileges for `service_role`; new Supabase projects no longer grant them automatically |
+| `supabase/migrations/002_scouting_aggregates_rpc.sql` | `player_event_totals(p_game_id, p_from, p_to)`; regenerated types now list it under `Functions` |
 
 - Applied with the Supabase CLI against the hockey project (ref `rexfsjoamjiqcfukyyle`):
   `npx supabase db push --db-url "$SUPABASE_DB_URL"`
