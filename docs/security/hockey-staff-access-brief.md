@@ -62,3 +62,10 @@ Hiding a menu item or a button only changes what the page draws. The data still 
 - Should coaches see scouting note text, or only event types and totals?
 - Do medical staff need to see game participation (who played) to judge load?
 - Can one person hold two roles (a coach who also scouts)? This sprint assumes one role each.
+
+## 10. Related documents
+
+This brief is the source for the rest of Sprint 4:
+
+- `docs/security/role-access-matrix.md` turns sections 3–4 into a role-by-data allow/deny table.
+- `docs/security/auth-session-plan.md` describes how sign-in and server-side session checks meet section 6.
