@@ -15,6 +15,7 @@ export function AppNav() {
       </Link>
       <Link
         to="/players"
+        search={{ position: 'all' }}
         className="text-slate-700 hover:text-slate-900"
         activeProps={{ className: 'text-sky-700 underline' }}
       >
@@ -22,6 +23,7 @@ export function AppNav() {
       </Link>
       <Link
         to="/games"
+        search={{ status: 'all', playerId: 'all' }}
         className="text-slate-700 hover:text-slate-900"
         activeProps={{ className: 'text-sky-700 underline' }}
       >
