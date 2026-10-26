@@ -66,7 +66,7 @@ Writes, sign-in, per-role visibility, and caching are later sprints.
 - [x] `/players/player-000` renders name, number, position after a hard refresh.
 - [x] `/players?position=goalieeeee` renders the full roster.
 - [x] Built client bundle contains no `SUPABASE_SECRET_KEY`, `supabase-js`, or `createClient(`.
-- [x] With no Supabase env, handlers serve the built-in seed roster.
+- [x] Sprint 3: handlers read through the typed helpers in `src/lib/scouting/queries.ts`; the in-app seed fallback was removed (seed now lives in `supabase/seed.sql`).
 
 ## Traceability
 

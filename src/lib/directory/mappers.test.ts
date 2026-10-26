@@ -1,24 +1,43 @@
 import { describe, expect, it } from 'vitest'
-import type { GameRow, PlayerRow } from '#/data/seed'
+import type { GameRow, PlayerRow, ScoutingEventWithRefs } from '#/lib/scouting/queries'
 import {
+  formatClock,
   normalizeDisplayName,
   parsePlayerFilter,
   parsePositionFilter,
   parseStatusFilter,
+  toEventCards,
   toGameCards,
   toPlayerCards,
 } from './mappers'
 
+const stamp = '2026-10-01T00:00:00Z'
+const player = (id: string, full_name: string, jersey_number: number, position: string, is_active = true): PlayerRow => ({
+  id,
+  full_name,
+  jersey_number,
+  position,
+  is_active,
+  team_name: 'Utah Hockey Ops',
+  created_at: stamp,
+  updated_at: stamp,
+})
+
 const players: PlayerRow[] = [
-  { id: 'player-000', name: 'Avery  Nguyen ', number: 17, position: 'forward', is_active: true },
-  { id: 'player-001', name: 'Owen Tremblay', number: 44, position: 'defense', is_active: true },
-  { id: 'player-002', name: 'Sam Ortiz', number: 26, position: 'forward', is_active: false },
+  player('player-000', 'Avery  Nguyen ', 17, 'forward'),
+  player('player-001', 'Owen Tremblay', 44, 'defense'),
+  player('player-002', 'Sam Ortiz', 26, 'forward', false),
 ]
 
-const games: GameRow[] = [
-  { id: 'g1', date: '2026-10-01T02:00:00Z', opponent: 'Seattle Kraken', status: 'final', player_id: 'player-000' },
-  { id: 'g2', date: '2026-11-01T02:00:00Z', opponent: 'Dallas Stars', status: 'upcoming', player_id: 'player-001' },
-]
+const game = (id: string, played_at: string, status: string): GameRow => ({
+  id,
+  played_at,
+  opponent: 'Seattle Kraken',
+  is_home: true,
+  venue: 'Delta Center',
+  status,
+  created_at: stamp,
+})
 
 describe('normalizeDisplayName', () => {
   // Cards and filters need stable labels: no "null", no double spaces.
@@ -61,14 +80,32 @@ describe('toPlayerCards', () => {
 })
 
 describe('toGameCards', () => {
-  it('labels games with player names, newest first', () => {
-    const cards = toGameCards(games, players, { status: 'all', playerId: 'all' })
-    expect(cards.map((c) => c.id)).toEqual(['g2', 'g1'])
-    expect(cards[1]?.playerName).toBe('Avery Nguyen')
+  it('orders games newest first', () => {
+    const cards = toGameCards([game('game-000', '2026-10-01T02:00:00Z', 'final'), game('game-001', '2026-11-01T02:00:00Z', 'upcoming')])
+    expect(cards.map((c) => c.id)).toEqual(['game-001', 'game-000'])
+  })
+})
+
+describe('toEventCards', () => {
+  it('flattens the joined player and game', () => {
+    const event: ScoutingEventWithRefs = {
+      id: 'e1',
+      player_id: 'player-000',
+      game_id: 'game-000',
+      event_type: 'goal',
+      period: 2,
+      clock_seconds: 754,
+      notes: null,
+      created_at: stamp,
+      updated_at: stamp,
+      player: { id: 'player-000', full_name: 'Avery Nguyen', jersey_number: 17, position: 'forward' },
+      game: { id: 'game-000', opponent: 'Seattle Kraken', played_at: stamp, status: 'final' },
+    }
+    expect(toEventCards([event])[0]).toMatchObject({ playerName: 'Avery Nguyen', opponent: 'Seattle Kraken', clock: '12:34' })
   })
 
-  it('combines status and player filters', () => {
-    expect(toGameCards(games, players, { status: 'final', playerId: 'player-001' })).toEqual([])
-    expect(toGameCards(games, players, { status: 'upcoming', playerId: 'player-001' })).toHaveLength(1)
+  it('formats a missing clock as null', () => {
+    expect(formatClock(null)).toBeNull()
+    expect(formatClock(5)).toBe('0:05')
   })
 })

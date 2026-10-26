@@ -30,7 +30,9 @@ function GamesIndexPage() {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-bold text-slate-900">Games board</h1>
-      <p className="mt-2 text-slate-600">{games.length} games match these filters.</p>
+      <p className="mt-2 text-slate-600">
+        {games.length} games match these filters.{search.playerId !== 'all' && ' Showing games where this player has scouting events.'}
+      </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {STATUSES.map((status) => (
@@ -67,10 +69,7 @@ function GamesIndexPage() {
           <li key={game.id} className="grid grid-cols-[1fr_auto] gap-1 px-4 py-3 text-sm sm:grid-cols-[8rem_1fr_auto]">
             <span className="text-slate-600">{dateFormat.format(new Date(game.date))}</span>
             <span>
-              vs <span className="font-medium">{game.opponent}</span> ·{' '}
-              <Link to="/players/$playerId" params={{ playerId: game.playerId }} className="text-sky-700 hover:underline">
-                {game.playerName}
-              </Link>
+              {game.isHome ? 'vs' : '@'} <span className="font-medium">{game.opponent}</span>
             </span>
             <span className="capitalize text-slate-600">{game.status}</span>
           </li>

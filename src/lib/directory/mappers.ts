@@ -1,7 +1,13 @@
 // Pure helpers only: no Supabase client, no env, no I/O.
 // Server functions fetch rows, then call these to shape what the UI receives.
 
-import type { GameRow, GameStatus, PlayerRow, Position } from '#/data/seed'
+import type {
+  GameRow,
+  GameStatus,
+  PlayerRow,
+  Position,
+  ScoutingEventWithRefs,
+} from '#/lib/scouting/queries'
 
 export type PlayerCard = {
   id: string
@@ -14,9 +20,21 @@ export type GameCard = {
   id: string
   date: string
   opponent: string
+  isHome: boolean
   status: GameStatus
+}
+
+export type EventCard = {
+  id: string
+  type: string
+  period: number | null
+  clock: string | null
+  notes: string | null
   playerId: string
   playerName: string
+  gameId: string
+  opponent: string
+  date: string
 }
 
 export type PositionFilter = Position | 'all'
@@ -56,9 +74,9 @@ export function filterActivePlayers(rows: PlayerRow[]): PlayerRow[] {
 export function mapPlayerRow(row: PlayerRow): PlayerCard {
   return {
     id: row.id,
-    displayName: normalizeDisplayName(row.name),
-    number: row.number,
-    position: row.position,
+    displayName: normalizeDisplayName(row.full_name),
+    number: row.jersey_number,
+    position: row.position as Position,
   }
 }
 
@@ -70,23 +88,35 @@ export function toPlayerCards(rows: PlayerRow[], position: PositionFilter): Play
     .sort((a, b) => a.number - b.number)
 }
 
-/** Games matching both filters, newest first, labelled with the player's name. */
-export function toGameCards(
-  games: GameRow[],
-  players: PlayerRow[],
-  filters: { status: StatusFilter; playerId: string },
-): GameCard[] {
-  const names = new Map(players.map((p) => [p.id, normalizeDisplayName(p.name)]))
-  return games
-    .filter((g) => filters.status === 'all' || g.status === filters.status)
-    .filter((g) => filters.playerId === 'all' || g.player_id === filters.playerId)
+export function toGameCards(rows: GameRow[]): GameCard[] {
+  return rows
     .map((g) => ({
       id: g.id,
-      date: g.date,
+      date: g.played_at,
       opponent: g.opponent,
-      status: g.status,
-      playerId: g.player_id,
-      playerName: names.get(g.player_id) ?? g.player_id,
+      isHome: g.is_home,
+      status: g.status as GameStatus,
     }))
     .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/** 754 seconds → "12:34" (elapsed time in the period). */
+export function formatClock(seconds: number | null): string | null {
+  if (seconds === null) return null
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+export function toEventCards(rows: ScoutingEventWithRefs[]): EventCard[] {
+  return rows.map((e) => ({
+    id: e.id,
+    type: e.event_type,
+    period: e.period,
+    clock: formatClock(e.clock_seconds),
+    notes: e.notes,
+    playerId: e.player.id,
+    playerName: normalizeDisplayName(e.player.full_name),
+    gameId: e.game.id,
+    opponent: e.game.opponent,
+    date: e.game.played_at,
+  }))
 }

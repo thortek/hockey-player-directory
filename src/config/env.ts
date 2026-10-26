@@ -21,7 +21,3 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
   }
 }
-
-export function hasSupabaseServerConfig(env: ServerEnv = getServerEnv()): boolean {
-  return Boolean(env.SUPABASE_URL && env.SUPABASE_SECRET_KEY)
-}
